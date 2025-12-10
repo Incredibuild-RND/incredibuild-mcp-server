@@ -35,7 +35,6 @@ from pydantic import BaseModel, Field, field_validator
 DB_FILE = "BuildHistoryDB.db"
 DB_TABLE = "build_history"
 SERVER_NAME = "IB-MCP"
-DB_DIR_ENV_VAR = "IB_DB_DIR"
 
 build_statuses = ("running", "completed", "stop_forced", "ib_problem_or_user_interrupt", "pending", )
 
@@ -135,11 +134,11 @@ def main():
     """Entry point for the MCP server."""
     global _db_path
     
-    db_dir = os.environ.get(DB_DIR_ENV_VAR)
+    db_dir = os.environ.get("IB_DB_DIR")
     if not db_dir:
-        raise SystemExit(f"Error: Environment variable '{DB_DIR_ENV_VAR}' is not set.\n"
+        raise SystemExit(f"Error: Environment variable 'IB_DB_DIR' is not set.\n"
                          f"Set it to the directory containing {DB_FILE}.\n"
-                         f"Example: export {DB_DIR_ENV_VAR}=/path/to/db/folder")
+                         f"Example: export IB_DB_DIR=/path/to/db/folder")
     
     _db_path = resolve_db_path(db_dir)
     mcp.run(transport="stdio")
