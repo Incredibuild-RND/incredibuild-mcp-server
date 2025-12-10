@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM python:3.13-slim
 
+LABEL org.opencontainers.image.source="https://github.com/Incredibuild-RND/incredibuild-mcp-server"
+
 WORKDIR /app
 
 # Install uv for fast dependency management
