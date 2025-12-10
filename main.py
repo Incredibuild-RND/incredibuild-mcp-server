@@ -1,11 +1,29 @@
-""" Integration string:
+"""
+IncrediBuild Build History MCP Server
+
+Integration config for Cursor/Claude Desktop (using uv):
 {
   "mcpServers": {
-    "server-name": {
-      "url": "http://localhost:8000/mcp",
+    "incredibuild": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/ib-mcp-server", "python", "main.py"],
+      "env": {
+        "IB_DB_DIR": "/path/to/your/db/folder"
+      }
     }
   }
-}"""
+}
+
+For Docker:
+{
+  "mcpServers": {
+    "incredibuild": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-v", "/path/to/db:/data", "-e", "IB_DB_DIR=/data", "incredibuild-mcp"]
+    }
+  }
+}
+"""
 import os
 import sqlite3
 from datetime import datetime
@@ -17,7 +35,6 @@ from pydantic import BaseModel, Field, field_validator
 DB_FILE = "BuildHistoryDB.db"
 DB_TABLE = "build_history"
 SERVER_NAME = "IB-MCP"
-DB_DIR_ENV_VAR = "IbDbDir"
 
 build_statuses = ("running", "completed", "stop_forced", "ib_problem_or_user_interrupt", "pending", )
 
@@ -25,9 +42,9 @@ class BuildMetadata(BaseModel):
     BuildCaption: str = Field(
         description="User custom Build title, VS project builds automatically takes the project name as the caption.")
     Status: str = Field(description=f"One of: {', '.join(build_statuses)}.")
-    BuildTime: int = Field(description="Representing the total time of the build in miliseconds.")
-    StartTime: int = Field(description="Represent the build start time - time from epoch in miliseconds.")
-    EndTime: int = Field(description="Represent the build end time - time from epoch in miliseconds.")
+    BuildTime: int = Field(description="Representing the total time of the build in milliseconds.")
+    StartTime: int = Field(description="Represent the build start time - time from epoch in milliseconds.")
+    EndTime: int = Field(description="Represent the build end time - time from epoch in milliseconds.")
     HasWarnings: bool = Field(description="Indicate if the build contains warnings.")
     ErrorsNumber: int = Field(description="Build errors counter.")
     WarningsNumber: int = Field(description="Build warnings counter.")
@@ -80,23 +97,25 @@ def resolve_db_path(db_dir_str: str) -> Path:
 
 mcp = FastMCP(SERVER_NAME)
 
+# Validated at startup, used by all tool calls
+_db_path: Path | None = None
+
 read_builds_in_time_range_desc = \
     f"""Read which builds were started run between start_timestamp and end_timestamp.
-    :param start_timestamp: The earliest build start time to retrieve, from epoch in miliseconds
-    :param end_timestamp: The latest build start time to retrieve, from epoch in miliseconds
+    :param start_timestamp: The earliest build start time to retrieve, from epoch in milliseconds
+    :param end_timestamp: The latest build start time to retrieve, from epoch in milliseconds
     :return: A JSON of the build with the following fields: 
     {'\n\t\t'.join(f'{el[0]} ({el[1]}): {el[2]}' for el in db_fields)}
     """
 
 @mcp.tool(name="read_builds_in_time_range", description=read_builds_in_time_range_desc)
 def read_builds_in_time_range(start_timestamp: int, end_timestamp: int) -> list[BuildMetadata]:
-    db_path = resolve_db_path(os.environ[DB_DIR_ENV_VAR])
-    return [BuildMetadata.from_tuple(row) for row in read_db_file(start_timestamp, end_timestamp, db_path)]
+    return [BuildMetadata.from_tuple(row) for row in read_db_file(start_timestamp, end_timestamp, _db_path)]
 
 read_recent_builds_desc = \
     f"""Read which builds were started run between start_time_ago and end_time_ago.
-    :param start_time_ago: The earliest build start time in miliseconds before the tool run time
-    :param end_time_ago: The latest build start time in miliseconds before the tool run time
+    :param start_time_ago: The earliest build start time in milliseconds before the tool run time
+    :param end_time_ago: The latest build start time in milliseconds before the tool run time
     :return: A JSON of the build with the following fields: 
     {'\n\t\t'.join(f'{el[0]} ({el[1]}): {el[2]}' for el in db_fields)}
     """
@@ -111,6 +130,19 @@ def get_version():
     return "0.0.1"
 
 
+def main():
+    """Entry point for the MCP server."""
+    global _db_path
+    
+    db_dir = os.environ.get("IB_DB_DIR")
+    if not db_dir:
+        raise SystemExit(f"Error: Environment variable 'IB_DB_DIR' is not set.\n"
+                         f"Set it to the directory containing {DB_FILE}.\n"
+                         f"Example: export IB_DB_DIR=/path/to/db/folder")
+    
+    _db_path = resolve_db_path(db_dir)
+    mcp.run(transport="stdio")
+
+
 if __name__ == "__main__":
-    _ = resolve_db_path(os.environ[DB_DIR_ENV_VAR])
-    mcp.run(transport="streamable-http")
+    main()
