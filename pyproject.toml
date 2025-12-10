@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-incredibuild-mcp = "build_history_mcp:main"
+incredibuild-mcp = "server:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -19,7 +19,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
-include = ["build_history_mcp.py"]
+include = ["server.py"]
 
 [dependency-groups]
 dev = [

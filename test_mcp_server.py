@@ -7,7 +7,7 @@ from pathlib import Path
 from mcp import ClientSession
 from mcp.client.stdio import stdio_client, StdioServerParameters
 
-SERVER = Path(__file__).parent / "build_history_mcp.py"
+SERVER = Path(__file__).parent / "server.py"
 TESTDATA = Path(__file__).parent / "testdata"
 
 PARAMS = StdioServerParameters(

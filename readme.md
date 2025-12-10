@@ -104,7 +104,7 @@ uv sync
 uv run pytest -v
 
 # Run locally
-IB_DB_DIR=./testdata uv run python build_history_mcp.py
+IB_DB_DIR=./testdata uv run python server.py
 ```
 
 ---
