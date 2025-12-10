@@ -1,11 +1,29 @@
-""" Integration string:
+"""
+IncrediBuild Build History MCP Server
+
+Integration config for Cursor/Claude Desktop (using uv):
 {
   "mcpServers": {
-    "server-name": {
-      "url": "http://localhost:8000/mcp",
+    "incredibuild": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/ib-mcp-server", "python", "build_history_mcp.py"],
+      "env": {
+        "IB_DB_DIR": "/path/to/your/db/folder"
+      }
     }
   }
-}"""
+}
+
+For Docker:
+{
+  "mcpServers": {
+    "incredibuild": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-v", "/path/to/db:/data", "-e", "IB_DB_DIR=/data", "incredibuild-mcp"]
+    }
+  }
+}
+"""
 import os
 import sqlite3
 from datetime import datetime
@@ -17,7 +35,7 @@ from pydantic import BaseModel, Field, field_validator
 DB_FILE = "BuildHistoryDB.db"
 DB_TABLE = "build_history"
 SERVER_NAME = "IB-MCP"
-DB_DIR_ENV_VAR = "IbDbDir"
+DB_DIR_ENV_VAR = "IB_DB_DIR"
 
 build_statuses = ("running", "completed", "stop_forced", "ib_problem_or_user_interrupt", "pending", )
 
@@ -111,6 +129,11 @@ def get_version():
     return "0.0.1"
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the MCP server."""
     _ = resolve_db_path(os.environ[DB_DIR_ENV_VAR])
-    mcp.run(transport="streamable-http")
+    mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

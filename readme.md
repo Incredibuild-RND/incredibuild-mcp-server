@@ -1,80 +1,114 @@
-# MCP Build History Server
+# IncrediBuild MCP Server
 
-A minimal [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that 
-exposes build history from local SQLite files.
-The server provides a 2 tools, `read_builds_in_time_range` and `read_recent_builds`, 
-for querying builds between two timestamps.
+A [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server that lets AI assistants query your IncrediBuild build history.
 
----
 ## Features
-* ✅ Simple MCP server using `FastMCP`
-* ✅ Pluggable data location via `IbDbDir` env var (no hardcoded paths)
-* ✅ Returns JSON list of builds
+
+* ✅ `stdio` transport for seamless AI client integration
+* ✅ Two query tools: by absolute timestamps or relative time
+* ✅ Docker support for containerized deployment
+* ✅ Configurable database location via environment variable
 
 ---
-## Requirements
-* Python 3.13+
-* SQLite databases available on your initiator machines
 
----
-## Installation
-Windows:
-```CMD
-uv venv ib_mcp --python 3.13
-ib_mcp\Scripts\activate
-uv pip install fastmcp pydantic
-setx IbDbDir "<your-db-dir-here>"
-cd <repo-dir>
-git clone https://github.com/scientistl/ib-mcp-server.git
-python 
-```
-Bash:
-```bash
-uv venv ib_mcp --python 3.13
-source ib_mcp/bin/activate
-uv pip install fastmcp pydantic
-echo 'export IbDbDir=<your-db-dir-here>' >> ~/.bashrc
-source ~/.bashrc
-cd <repo-dir>
-git clone https://github.com/scientistl/ib-mcp-server.git
-```
-
----
 ## Quick Start
-```
-cd <your-repo>
-python build_history_mcp.py
+
+```bash
+docker run -i --rm \
+  -v /path/to/your/db/folder:/data \
+  ghcr.io/incredibuild-rnd/incredibuild-mcp-server:v0.1.0
 ```
 
 ---
-## Check the installation
-Reads the tool description and reads all the lines in the file.
+
+## Integration with AI Clients
+
+### Cursor / Claude Desktop
+
+Add to your MCP configuration (`~/.cursor/mcp.json` or Claude Desktop settings):
+
+```json
+{
+  "mcpServers": {
+    "incredibuild": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "/path/to/your/db/folder:/data",
+        "ghcr.io/incredibuild-rnd/incredibuild-mcp-server:v0.1.0"
+      ]
+    }
+  }
+}
 ```
-cd <your-repo>
-python build_history_mcp_check.py
+
+Replace `/path/to/your/db/folder` with the directory containing your `BuildHistoryDB.db`.
+
+**Windows example** (path is typically `C:\ProgramData\Incredibuild\Manager\`):
+
+```json
+{
+  "mcpServers": {
+    "incredibuild": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "C:/ProgramData/Incredibuild/Manager:/data",
+        "ghcr.io/incredibuild-rnd/incredibuild-mcp-server:v0.1.0"
+      ]
+    }
+  }
+}
 ```
-## MCP Interface
-### Tool: `read_builds_in_time_range`
-Read which builds started between `start_timestamp` and `end_timestamp`.
 
-**Parameters**
-* `start_timestamp` (int): earliest build start (epoch milliseconds)
-* `end_timestamp` (int): latest build start (epoch milliseconds)
+---
 
-**Returns**
-* `list[BuildMetadata]` serialized to JSON.
+## MCP Tools
 
+### `read_builds_in_time_range`
 
-### Tool: `read_recent_builds`
-Read which builds started between `start_timestamp` and `end_timestamp`.
+Query builds that started between two absolute timestamps.
 
-**Parameters**
-* `started_milisec_ago` (int): earliest build start time in miliseconds before the tool run time
-* `end_milisec_ago` (int): latest build start time in miliseconds before the tool run time
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `start_timestamp` | int | Earliest build start (epoch milliseconds) |
+| `end_timestamp` | int | Latest build start (epoch milliseconds) |
 
-**Returns**
-* `list[BuildMetadata]` serialized to JSON.
+### `read_recent_builds`
 
-## Security Notes
+Query builds relative to the current time.
 
-* The server reads local SQLite files only. If you serve it remotely, ensure the process user has least-privilege access to the DB directory.
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `start_time_ago` | int | Earliest build (ms before now) |
+| `end_time_ago` | int | Latest build (ms before now) |
+
+**Returns**: List of `BuildMetadata` objects with:
+- `BuildCaption`, `Status`, `BuildTime`, `StartTime`, `EndTime`
+- `HasWarnings`, `ErrorsNumber`, `WarningsNumber`
+- `SysErrorsNumber`, `SysWarningsNumber`, `EnvVars`
+
+---
+
+## Development
+
+```bash
+# Clone
+git clone https://github.com/Incredibuild-RND/incredibuild-mcp-server.git
+cd incredibuild-mcp-server
+
+# Install
+uv sync
+
+# Test
+uv run pytest -v
+
+# Run locally
+IB_DB_DIR=./testdata uv run python build_history_mcp.py
+```
+
+---
+
+## License
+
+See [License](LICENSE)
