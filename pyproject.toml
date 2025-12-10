@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-incredibuild-mcp = "server:main"
+incredibuild-mcp = "main:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -19,7 +19,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
-include = ["server.py"]
+include = ["main.py"]
 
 [dependency-groups]
 dev = [

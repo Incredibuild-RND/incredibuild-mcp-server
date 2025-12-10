@@ -19,7 +19,7 @@ This is an **MCP (Model Context Protocol) server** that exposes IncrediBuild bui
 
 ```
 incredibuild-mcp-server/
-├── server.py                 # Main MCP server implementation
+├── main.py                   # Main MCP server implementation
 ├── test_mcp_server.py        # Integration tests (pytest)
 ├── pyproject.toml            # Project config and dependencies
 ├── Dockerfile                # Container build
@@ -31,7 +31,7 @@ incredibuild-mcp-server/
 
 ## Key Files
 
-### `server.py`
+### `main.py`
 The main server. Key components:
 - `BuildMetadata` - Pydantic model for build data
 - `read_builds_in_time_range` - MCP tool to query by absolute timestamps
@@ -128,7 +128,7 @@ async with stdio_client(get_server_params()) as (read_stream, write_stream):
 ## Common Tasks
 
 ### Adding a new MCP tool
-1. Define the tool function in `server.py`
+1. Define the tool function in `main.py`
 2. Decorate with `@mcp.tool(name="...", description="...")`
 3. Add integration tests in `test_mcp_server.py`
 4. Run `uv run pytest -v` to verify

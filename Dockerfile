@@ -8,7 +8,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy project files
 COPY pyproject.toml .
-COPY server.py .
+COPY main.py .
 
 # Install dependencies using uv
 RUN uv pip install --system --no-cache .
@@ -16,5 +16,5 @@ RUN uv pip install --system --no-cache .
 ENV IB_DB_DIR=/data
 
 # Run the MCP server in STDIO mode
-ENTRYPOINT ["python", "server.py"]
+ENTRYPOINT ["python", "main.py"]
 

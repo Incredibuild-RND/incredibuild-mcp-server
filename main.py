@@ -6,7 +6,7 @@ Integration config for Cursor/Claude Desktop (using uv):
   "mcpServers": {
     "incredibuild": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/ib-mcp-server", "python", "server.py"],
+      "args": ["run", "--directory", "/path/to/ib-mcp-server", "python", "main.py"],
       "env": {
         "IB_DB_DIR": "/path/to/your/db/folder"
       }
